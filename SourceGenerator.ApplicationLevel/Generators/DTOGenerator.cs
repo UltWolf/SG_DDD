@@ -1,9 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using SourceGenerator.Common.Data;
-#pragma warning disable RS1035
+using SourceGenerator.Common.Helper;
+
 namespace SourceGeneratorLib.Generators
 {
     [Generator]
+#pragma warning disable RS1035
     public class DTOGenerator : ISourceGenerator
     {
         private Compilation compilation;
@@ -14,13 +16,12 @@ namespace SourceGeneratorLib.Generators
             compilation = context.Compilation;
             var syntaxTrees = compilation.SyntaxTrees;
 
-            //SpinWait.SpinUntil(() => Debugger.IsAttached);
+            // System.Threading.SpinWait.SpinUntil(() => System.Diagnostics.Debugger.IsAttached);
             foreach (var syntaxTree in syntaxTrees)
             {
                 var root = syntaxTree.GetRoot();
                 var assemblyName = compilation.AssemblyName;
 
-                // Check if current assembly name contains ".Application"
                 if (assemblyName == null || !assemblyName.Contains(".Application"))
                 {
                     continue;
@@ -34,7 +35,7 @@ namespace SourceGeneratorLib.Generators
 
                     if (domainAssembly != null)
                     {
-                        var classDeclarations = GetClassDeclarations(domainAssembly.GlobalNamespace).ToList();
+                        var classDeclarations = ClassDeclarationHelper.GetClassDeclarations(domainAssembly.GlobalNamespace, "DTO").ToList();
 
                         foreach (var classDeclaration in classDeclarations)
                         {
@@ -59,6 +60,12 @@ namespace SourceGeneratorLib.Generators
                                         ClassName = $"Create{className}DTO.cs",
                                         Generated = GenerateCreateDTO(@namespace, className, classDeclaration),
                                         PathToOutput = baseOutputDir
+                                    },
+                                    new GeneratedClass
+                                    {
+                                        ClassName = $"{className}MappingProfile.cs",
+                                        Generated = GenerateMappingProfile(@namespace, className, classDeclaration),
+                                        PathToOutput = Path.Combine(className.Trim(), "MappingProfile")
                                     }
                                 }
                             };
@@ -74,51 +81,32 @@ namespace SourceGeneratorLib.Generators
                     {
                         foreach (var generatedClass in classToInsert.GeneratedClasses)
                         {
-                            WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated);
+                            FileHelper.WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated);
                         }
                     }
                 }
             }
         }
-
-        private IEnumerable<INamedTypeSymbol> GetClassDeclarations(INamespaceSymbol namespaceSymbol)
+        private string GenerateMappingProfile(string namespaceName, string className, INamedTypeSymbol classSymbol)
         {
-            var classDeclarations = new List<INamedTypeSymbol>();
+            return $@"
+using AutoMapper;
+using {namespaceName}.Domains.{className};
 
-            foreach (var member in namespaceSymbol.GetMembers())
-            {
-                if (member is INamespaceSymbol nestedNamespace)
-                {
-                    // Recursively get class declarations from nested namespaces
-                    classDeclarations.AddRange(GetClassDeclarations(nestedNamespace));
-                }
-                else if (member is INamedTypeSymbol typeSymbol && typeSymbol.TypeKind == TypeKind.Class)
-                {
-                    if (member.Name != "<Module>" && HasGenerateCodeAttribute(typeSymbol, "DTO"))
+namespace {namespaceName}.Application.{className}.DTO.MappingConfiguration;
 
-                    {
-                        //var properties = GetProperties(typeSymbol);
-                        classDeclarations.Add(typeSymbol);
-                    }
-                }
-            }
-
-            return classDeclarations;
+public class {className}MappingProfile : Profile
+{{
+    public {className}MappingProfile()
+    {{
+        CreateMap<{className}, {className}Dto>();
+        CreateMap<Create{className}Dto, {className}>();
+    }}
+}}";
         }
-        private bool HasGenerateCodeAttribute(INamedTypeSymbol classDeclaration, string attributeValue)
-        {
-            var generateCodeAttribute = classDeclaration.GetAttributes().FirstOrDefault(attr =>
-                attr.AttributeClass.ToDisplayString().Contains("Data.Attributes.GenerateCode") &&
-                attr.ConstructorArguments.Length == 1 &&
-                attr.ConstructorArguments[0].Value is string value &&
-                value == attributeValue);
 
-            return generateCodeAttribute != null;
-        }
-        private IEnumerable<IPropertySymbol> GetProperties(INamedTypeSymbol typeSymbol)
-        {
-            return typeSymbol.GetMembers().OfType<IPropertySymbol>();
-        }
+
+
 
 
 
@@ -153,19 +141,7 @@ namespace {namespaceName}.Dto
 }}";
         }
 
-        private void WriteToFile(string directory, string fileName, string content)
-        {
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-            var filePath = Path.Combine(directory, fileName);
-            if (File.Exists(filePath))
-            {
-                return;
-            }
-            File.WriteAllText(filePath, content);
-        }
+
 
         public void Initialize(GeneratorInitializationContext context)
         {

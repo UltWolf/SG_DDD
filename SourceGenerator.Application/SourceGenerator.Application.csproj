@@ -6,8 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" />
-		<ProjectReference Include="..\SourceGenerator.Domain\SourceGenerator.Domain.csproj" /> 
-		<ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\SourceGenerator.ApplicationLevel\SourceGenerator.ApplicationLevel.csproj" />
+		<ProjectReference Include="..\SourceGenerator.ApplicationLevel\SourceGenerator.ApplicationLevel.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\SourceGenerator.Domain\SourceGenerator.Domain.csproj" />
+		<!--<ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" />
+		<ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />-->
 	</ItemGroup>
 </Project>

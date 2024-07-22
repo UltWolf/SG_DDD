@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SourceGenerator.Common\SourceGenerator.Common.csproj" />
+    <ProjectReference Include="..\SourceGenerator.DomainLevel\SourceGenerator.DomainLevel.csproj" />
     <ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" /> 
+    <ProjectReference Include="..\SourceGenerator.ApplicationLevel\SourceGenerator.ApplicationLevel.csproj" /> 
   </ItemGroup>
 </Project>

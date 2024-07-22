@@ -1,4 +1,6 @@
-﻿namespace SourceGeneratorLib.Data.Attributes
+﻿using System;
+
+namespace SourceGenerator.Common.Data.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public sealed class GenerateCodeAttribute : Attribute

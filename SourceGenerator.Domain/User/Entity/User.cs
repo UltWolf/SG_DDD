@@ -1,6 +1,9 @@
 ﻿namespace SourceGenerator.Domain.User.Entity
 {
-    [SourceGeneratorLib.Data.Attributes.GenerateCode("DTO")]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode("DTO")]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode("MediatRCommand")]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode("EFConfigurations")]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode("TableConstants")]
     public class User
     {
         public int Id { get; set; }

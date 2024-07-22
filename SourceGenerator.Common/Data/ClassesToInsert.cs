@@ -1,4 +1,6 @@
-﻿namespace SourceGeneratorLib.Data
+﻿using System.Collections.Generic;
+
+namespace SourceGenerator.Common.Data
 {
     public class ClassesToInsert
     {
