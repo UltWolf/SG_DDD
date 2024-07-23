@@ -1,9 +1,13 @@
-﻿namespace SourceGenerator.Domain.User.Entity
+﻿using SourceGenerator.Common.Data.Constants;
+using SourceGenerator.Domain.Basic;
+
+namespace SourceGenerator.Domain.User.Entity
 {
-    [SourceGenerator.Common.Data.Attributes.GenerateCode("DTO")]
-    [SourceGenerator.Common.Data.Attributes.GenerateCode("MediatRCommand")]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.DtoLayer)]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.MediatRCommandLayer, typeof(BasicError))]
     [SourceGenerator.Common.Data.Attributes.GenerateCode("EFConfigurations")]
     [SourceGenerator.Common.Data.Attributes.GenerateCode("TableConstants")]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.EFRepositoryLayer)]
     public class User
     {
         public int Id { get; set; }

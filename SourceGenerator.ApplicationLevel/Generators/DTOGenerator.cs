@@ -1,5 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
+using SourceGenerator.ApplicationLevel.Constants;
 using SourceGenerator.Common.Data;
+using SourceGenerator.Common.Data.Constants;
 using SourceGenerator.Common.Helper;
 
 namespace SourceGeneratorLib.Generators
@@ -16,7 +18,8 @@ namespace SourceGeneratorLib.Generators
             compilation = context.Compilation;
             var syntaxTrees = compilation.SyntaxTrees;
 
-            // System.Threading.SpinWait.SpinUntil(() => System.Diagnostics.Debugger.IsAttached);
+            //System.Diagnostics.Debugger.Launch();
+            //System.Threading.SpinWait.SpinUntil(() => System.Diagnostics.Debugger.IsAttached);
             foreach (var syntaxTree in syntaxTrees)
             {
                 var root = syntaxTree.GetRoot();
@@ -35,14 +38,14 @@ namespace SourceGeneratorLib.Generators
 
                     if (domainAssembly != null)
                     {
-                        var classDeclarations = ClassDeclarationHelper.GetClassDeclarations(domainAssembly.GlobalNamespace, "DTO").ToList();
+                        var classDeclarations = ClassDeclarationHelper.GetClassDeclarations(domainAssembly.GlobalNamespace, LayerGenerate.DtoLayer).ToList();
 
                         foreach (var classDeclaration in classDeclarations)
                         {
-                            var @namespace = classDeclaration.ContainingNamespace.ToDisplayString();
+                            var @namespace = classDeclaration.ContainingNamespace.ToDisplayString().Replace("Domain", "");
                             var className = classDeclaration.Name;
 
-                            var baseOutputDir = Path.Combine(className.Trim(), "Dto");
+                            var baseOutputDir = Path.Combine(className.Trim(), StringConstants.DTOEnding);
 
                             var classToInsert = new ClassesToInsert
                             {
@@ -51,13 +54,13 @@ namespace SourceGeneratorLib.Generators
                                 {
                                     new GeneratedClass
                                     {
-                                        ClassName = $"{className}DTO.cs",
+                                        ClassName = $"{className}{StringConstants.DTOEnding}.cs",
                                         Generated = GenerateDTO(@namespace, className, classDeclaration),
                                         PathToOutput = baseOutputDir
                                     },
                                     new GeneratedClass
                                     {
-                                        ClassName = $"Create{className}DTO.cs",
+                                        ClassName = $"Create{className}{StringConstants.DTOEnding}.cs",
                                         Generated = GenerateCreateDTO(@namespace, className, classDeclaration),
                                         PathToOutput = baseOutputDir
                                     },
@@ -65,7 +68,7 @@ namespace SourceGeneratorLib.Generators
                                     {
                                         ClassName = $"{className}MappingProfile.cs",
                                         Generated = GenerateMappingProfile(@namespace, className, classDeclaration),
-                                        PathToOutput = Path.Combine(className.Trim(), "MappingProfile")
+                                        PathToOutput = Path.Combine(baseOutputDir, "MappingProfile")
                                     }
                                 }
                             };
@@ -77,13 +80,8 @@ namespace SourceGeneratorLib.Generators
 
                 if (classesToInsert.Count > 0)
                 {
-                    foreach (var classToInsert in classesToInsert)
-                    {
-                        foreach (var generatedClass in classToInsert.GeneratedClasses)
-                        {
-                            FileHelper.WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated);
-                        }
-                    }
+                    CodeGenerationHelper.WriteGeneratedClasses(classesToInsert);
+                    break;
                 }
             }
         }
@@ -93,14 +91,14 @@ namespace SourceGeneratorLib.Generators
 using AutoMapper;
 using {namespaceName}.Domains.{className};
 
-namespace {namespaceName}.Application.{className}.DTO.MappingConfiguration;
+namespace {namespaceName}.Application.{className}.{StringConstants.DTOEnding}.MappingConfiguration;
 
 public class {className}MappingProfile : Profile
 {{
     public {className}MappingProfile()
     {{
-        CreateMap<{className}, {className}Dto>();
-        CreateMap<Create{className}Dto, {className}>();
+        CreateMap<{className}, {className}{StringConstants.DTOEnding}>();
+        CreateMap<Create{className}{StringConstants.DTOEnding}, {className}>();
     }}
 }}";
         }
@@ -110,15 +108,19 @@ public class {className}MappingProfile : Profile
 
 
 
+        private string GetDtoNamespace(string namespaceName)
+        {
+            return $"namespace {namespaceName}.Application.{StringConstants.DTOEnding}";
+        }
         private string GenerateDTO(string namespaceName, string className, INamedTypeSymbol classSymbol)
         {
             var properties = string.Join(Environment.NewLine, classSymbol.GetMembers().OfType<IPropertySymbol>()
-                .Select(p => $"        public {p.Type} {p.Name} {{ get; set; }}"));
+                .Select(p => $"        public {p.Type} {p.Name} {StringConstants.PropertiesAccessories}"));
 
             return $@"
-namespace {namespaceName}.DTOs
+{GetDtoNamespace(namespaceName)}
 {{
-    public record {className}DTO
+    public record {className}{StringConstants.DTOEnding}
     {{
 {properties}
     }}
@@ -129,12 +131,12 @@ namespace {namespaceName}.DTOs
         {
             var properties = string.Join(Environment.NewLine, classSymbol.GetMembers().OfType<IPropertySymbol>()
                 .Where(p => !p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))
-                .Select(p => $"        public {p.Type} {p.Name} {{ get; set; }}"));
+                .Select(p => $"        public {p.Type} {p.Name} {StringConstants.PropertiesAccessories}"));
 
             return $@"
-namespace {namespaceName}.Dto
+{GetDtoNamespace(namespaceName)}
 {{
-    public record Create{className}Dto
+    public record Create{className}{StringConstants.DTOEnding}
     {{
 {properties}
     }}

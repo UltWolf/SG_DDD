@@ -2,7 +2,12 @@
 {
     using Microsoft.CodeAnalysis;
     using SourceGenerator.Common.Data;
+    using SourceGenerator.Common.Data.Attributes;
     using SourceGenerator.Common.Helper;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
 #pragma warning disable RS1035
     namespace SourceGeneratorLib.Generators
     {
@@ -11,12 +16,14 @@
         {
             private Compilation compilation;
             private readonly List<ClassesToInsert> classesToInsert = new List<ClassesToInsert>();
+            private bool hasOneOfReference;
 
             public void Execute(GeneratorExecutionContext context)
             {
                 compilation = context.Compilation;
                 var syntaxTrees = compilation.SyntaxTrees;
-
+                hasOneOfReference = compilation.References.Any(r => r.Display.Contains("OneOf"));
+                //System.Diagnostics.Debugger.Launch();
                 foreach (var syntaxTree in syntaxTrees)
                 {
                     var root = syntaxTree.GetRoot();
@@ -38,6 +45,20 @@
 
                             foreach (var classDeclaration in classDeclarations)
                             {
+                                var attributeData = classDeclaration.GetAttributes()
+                                    .FirstOrDefault(ad => ad.AttributeClass.Name == nameof(GenerateCodeAttribute));
+
+                                if (attributeData == null)
+                                {
+                                    continue;
+                                }
+
+                                var attributeArguments = attributeData.ConstructorArguments;
+                                var additionalType = attributeArguments.Length == 2 ? attributeArguments[1].Value as INamedTypeSymbol : null;
+
+                                var additionalTypeName = additionalType?.ToDisplayString() ?? "object";
+                                var additionalTypeNamespace = additionalType != null ? $"using {additionalType.ContainingNamespace.ToDisplayString()};" : string.Empty;
+
                                 var @namespace = classDeclaration.ContainingNamespace.ToDisplayString();
                                 var className = classDeclaration.Name;
 
@@ -47,26 +68,26 @@
                                 {
                                     ClassName = className,
                                     GeneratedClasses = new List<GeneratedClass>
-                                {
-                                    new GeneratedClass
                                     {
-                                        ClassName = $"Create{className}Command.cs",
-                                        Generated = GenerateCreateCommand(@namespace, className),
-                                        PathToOutput = baseOutputDir
-                                    },
-                                    new GeneratedClass
-                                    {
-                                        ClassName = $"Delete{className}Command.cs",
-                                        Generated = GenerateDeleteCommand(@namespace, className),
-                                        PathToOutput = baseOutputDir
-                                    },
-                                    new GeneratedClass
-                                    {
-                                        ClassName = $"Update{className}Command.cs",
-                                        Generated = GenerateUpdateCommand(@namespace, className),
-                                        PathToOutput = baseOutputDir
+                                        new GeneratedClass
+                                        {
+                                            ClassName = $"Create{className}Command.cs",
+                                            Generated = GenerateCreateCommand(@namespace, classDeclaration, additionalTypeName, additionalTypeNamespace),
+                                            PathToOutput = baseOutputDir
+                                        },
+                                        new GeneratedClass
+                                        {
+                                            ClassName = $"Delete{className}Command.cs",
+                                            Generated = GenerateDeleteCommand(@namespace, classDeclaration),
+                                            PathToOutput = baseOutputDir
+                                        },
+                                        new GeneratedClass
+                                        {
+                                            ClassName = $"Update{className}Command.cs",
+                                            Generated = GenerateUpdateCommand(@namespace, classDeclaration, additionalTypeName, additionalTypeNamespace),
+                                            PathToOutput = baseOutputDir
+                                        }
                                     }
-                                }
                                 };
 
                                 classesToInsert.Add(classToInsert);
@@ -76,61 +97,47 @@
 
                     if (classesToInsert.Count > 0)
                     {
-                        foreach (var classToInsert in classesToInsert)
-                        {
-                            foreach (var generatedClass in classToInsert.GeneratedClasses)
-                            {
-                                FileHelper.WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated);
-                            }
-                        }
+                        CodeGenerationHelper.WriteGeneratedClasses(classesToInsert);
+                        break;
                     }
                 }
             }
 
-
-
-            private bool HasGenerateCodeAttribute(INamedTypeSymbol classDeclaration, string attributeValue)
+            private string GenerateCreateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
             {
-                var generateCodeAttribute = classDeclaration.GetAttributes().FirstOrDefault(attr =>
-                    attr.AttributeClass.ToDisplayString().Contains("Data.Attributes.GenerateCode") &&
-                    attr.ConstructorArguments.Length == 1 &&
-                    attr.ConstructorArguments[0].Value is string value &&
-                    value == attributeValue);
+                var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+                var className = classDeclaration.Name;
+                var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
+                var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
 
-                return generateCodeAttribute != null;
-            }
-
-            private string GenerateCreateCommand(string namespaceName, string className)
-            {
                 return $@"
 using MediatR;
-using OneOf;
-using {namespaceName}.DTO;
+{returnNamespace}
+using {namespaceName}.Dto;
 using {namespaceName}.Service;
-using {namespaceName}.Entities;
+using {entityNamespace};
 using {namespaceName}.Repositories;
 using {namespaceName}.Errors;
 
 namespace {namespaceName}.Commands
 {{
-    public class Create{className}Command : IRequest<OneOf<{className}Dto, TrainingError>>
+    public class Create{className}Command : IRequest<{returnType}>
     {{
         public Create{className}Dto New{className} {{ get; init; }} = null!;
     }}
 
-    public class Create{className}Handler : IRequestHandler<Create{className}Command, OneOf<{className}Dto, TrainingError>>
+    public class Create{className}Handler : IRequestHandler<Create{className}Command, {returnType}>
     {{
         private readonly IMapper _mapper;
-        private readonly I{className}Repository _repository; 
+        private readonly I{className}Repository _repository;
 
         public Create{className}Handler(I{className}Repository repository, IMapper mapper)
         {{
             _mapper = mapper;
             _repository = repository;
-            _service = service;
         }}
 
-        public async Task<OneOf<{className}Dto, TrainingError>> Handle(Create{className}Command request, CancellationToken cancellationToken)
+        public async Task<{returnType}> Handle(Create{className}Command request, CancellationToken cancellationToken)
         {{
             var entity = _mapper.Map<{className}>(request.New{className});
             var newEntity = await _repository.AddAsync(entity, cancellationToken);
@@ -141,11 +148,14 @@ namespace {namespaceName}.Commands
 ";
             }
 
-            private string GenerateDeleteCommand(string namespaceName, string className)
+            private string GenerateDeleteCommand(string namespaceName, INamedTypeSymbol classDeclaration)
             {
+                var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+                var className = classDeclaration.Name;
+
                 return $@"
 using MediatR;
-using {namespaceName}.Entities;
+using {entityNamespace};
 using {namespaceName}.Repositories;
 
 namespace {namespaceName}.Commands
@@ -173,25 +183,30 @@ namespace {namespaceName}.Commands
 ";
             }
 
-            private string GenerateUpdateCommand(string namespaceName, string className)
+            private string GenerateUpdateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
             {
+                var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+                var className = classDeclaration.Name;
+                var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
+                var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
+
                 return $@"
 using MediatR;
-using OneOf;
-using {namespaceName}.DTO;
+{returnNamespace}
+using {namespaceName}.Dto;
 using {namespaceName}.Service;
-using {namespaceName}.Entities;
+using {entityNamespace};
 using {namespaceName}.Repositories;
 using {namespaceName}.Errors;
 
 namespace {namespaceName}.Commands
 {{
-    public class Update{className}Command : IRequest<OneOf<{className}Dto, TrainingError>>
+    public class Update{className}Command : IRequest<{returnType}>
     {{
         public {className}Dto Update{className} {{ get; init; }} = null!;
     }}
 
-    public class Update{className}Handler : IRequestHandler<Update{className}Command, OneOf<{className}Dto, TrainingError>>
+    public class Update{className}Handler : IRequestHandler<Update{className}Command, {returnType}>
     {{
         private readonly IMapper _mapper;
         private readonly I{className}Repository _repository;
@@ -204,7 +219,7 @@ namespace {namespaceName}.Commands
             _service = service;
         }}
 
-        public async Task<OneOf<{className}Dto, TrainingError>> Handle(Update{className}Command request, CancellationToken cancellationToken)
+        public async Task<{returnType}> Handle(Update{className}Command request, CancellationToken cancellationToken)
         {{
             var entity = _mapper.Map<{className}>(request.Update{className});
             var updatedEntity = await _repository.UpdateAsync(entity, cancellationToken);
@@ -215,12 +230,9 @@ namespace {namespaceName}.Commands
 ";
             }
 
-
-
             public void Initialize(GeneratorInitializationContext context)
             {
             }
         }
     }
-
 }

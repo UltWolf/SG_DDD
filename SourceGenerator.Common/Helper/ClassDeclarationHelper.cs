@@ -32,8 +32,8 @@ namespace SourceGenerator.Common.Helper
         private static bool HasGenerateCodeAttribute(INamedTypeSymbol classDeclaration, string attributeValue)
         {
             var generateCodeAttribute = classDeclaration.GetAttributes().FirstOrDefault(attr =>
-                attr.AttributeClass.ToDisplayString().Contains("Data.Attributes.GenerateCode") &&
-                attr.ConstructorArguments.Length == 1 &&
+                attr.AttributeClass.ToDisplayString().Contains("Data.Attributes.GenerateCode")
+                 &&
                 attr.ConstructorArguments[0].Value is string value &&
                 value == attributeValue);
 
