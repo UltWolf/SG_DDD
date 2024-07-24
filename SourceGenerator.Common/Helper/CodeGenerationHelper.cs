@@ -13,7 +13,10 @@ namespace SourceGenerator.Common.Helper
             {
                 foreach (var generatedClass in classToInsert.GeneratedClasses)
                 {
-                    FileHelper.WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated);
+                    if (!string.IsNullOrEmpty(generatedClass.Generated))
+                    {
+                        FileHelper.WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated);
+                    }
                 }
             }
         }

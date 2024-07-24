@@ -4,6 +4,7 @@ using SourceGenerator.Common.Data;
 using SourceGenerator.Common.Data.Constants;
 using SourceGenerator.Common.Helper;
 
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Build", "CA1812:Avoid uninstantiated internal classes", Justification = "Source Generator")]
 namespace SourceGeneratorLib.Generators
 {
     [Generator]
@@ -76,12 +77,11 @@ namespace SourceGeneratorLib.Generators
                             classesToInsert.Add(classToInsert);
                         }
                     }
-                }
-
-                if (classesToInsert.Count > 0)
-                {
-                    CodeGenerationHelper.WriteGeneratedClasses(classesToInsert);
-                    break;
+                    if (classesToInsert.Count > 0)
+                    {
+                        CodeGenerationHelper.WriteGeneratedClasses(classesToInsert);
+                        break;
+                    }
                 }
             }
         }

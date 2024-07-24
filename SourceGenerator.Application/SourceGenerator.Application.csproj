@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+	  <Deterministic>false</Deterministic>
+	  <DisableIncrementalBuild>true</DisableIncrementalBuild>
+	  <RebuildIdentifier Condition="'$(Configuration)' == 'Debug'">Debug_$(MSBuildProjectFullPath)_$(DateTime)</RebuildIdentifier>
+	  <RebuildIdentifier Condition="'$(Configuration)' == 'Release'">Release_$(MSBuildProjectFullPath)_$(DateTime)</RebuildIdentifier>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
@@ -11,5 +15,8 @@
 		<ProjectReference Include="..\SourceGenerator.Domain\SourceGenerator.Domain.csproj" />
 		<!--<ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" />
 		<ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />-->
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="User\" />
 	</ItemGroup>
 </Project>

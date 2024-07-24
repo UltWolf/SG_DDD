@@ -7,10 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SourceGenerator.Common\SourceGenerator.Common.csproj" />
     <ProjectReference Include="..\SourceGenerator.DomainLevel\SourceGenerator.DomainLevel.csproj" />
-	  <ProjectReference Include="..\SourceGenerator.DomainLevel\SourceGenerator.DomainLevel.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\SourceGeneratorLib\SourceGeneratorLib.csproj" /> 
+	  <ProjectReference Include="..\SourceGenerator.DomainLevel\SourceGenerator.DomainLevel.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" /> 
     <ProjectReference Include="..\SourceGenerator.ApplicationLevel\SourceGenerator.ApplicationLevel.csproj" /> 
   </ItemGroup>
 </Project>

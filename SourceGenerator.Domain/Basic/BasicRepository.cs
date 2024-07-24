@@ -1,6 +1,10 @@
 ﻿namespace SourceGenerator.Domain.Basic
 {
-    public class BasicRepository
+    public interface IBasicRepository
+    {
+
+    }
+    public class BasicRepository : IBasicRepository
     {
     }
 }

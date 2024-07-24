@@ -3,23 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGeneratorLib", "SourceGeneratorLib\SourceGeneratorLib.csproj", "{2567933F-419D-4410-ABA4-E8D4936C6085}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator.Application", "SourceGenerator.Application\SourceGenerator.Application.csproj", "{B70E67BD-7F20-4F2A-A7F9-4D9E2F584AB5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator.Domain", "SourceGenerator.Domain\SourceGenerator.Domain.csproj", "{AED0AC2F-4224-4C4C-8E4C-7B3EFE4D3556}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerator.Common", "SourceGenerator.Common\SourceGenerator.Common.csproj", "{C0B881B3-9CDC-4571-9581-E7FE74C33C74}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator.Common", "SourceGenerator.Common\SourceGenerator.Common.csproj", "{C0B881B3-9CDC-4571-9581-E7FE74C33C74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerator.DomainLevel", "SourceGenerator.DomainLevel\SourceGenerator.DomainLevel.csproj", "{FF05EA0C-EE8B-428D-B8D5-A14CD28D68F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator.DomainLevel", "SourceGenerator.DomainLevel\SourceGenerator.DomainLevel.csproj", "{FF05EA0C-EE8B-428D-B8D5-A14CD28D68F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerator.ApplicationLevel", "SourceGenerator.ApplicationLevel\SourceGenerator.ApplicationLevel.csproj", "{C302ED7E-A5E1-4654-8F7E-5FC08ED12069}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator.ApplicationLevel", "SourceGenerator.ApplicationLevel\SourceGenerator.ApplicationLevel.csproj", "{C302ED7E-A5E1-4654-8F7E-5FC08ED12069}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SourceGenerators", "SourceGenerators", "{B4D72BD4-A624-4B2C-8FBA-1C138464B075}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerator.InfrastractureLevel", "SourceGenerator.InfrastractureLevel\SourceGenerator.InfrastractureLevel.csproj", "{D0499077-C13F-4B8C-8912-56E052A1EFA5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator.InfrastractureLevel", "SourceGenerator.InfrastractureLevel\SourceGenerator.InfrastractureLevel.csproj", "{D0499077-C13F-4B8C-8912-56E052A1EFA5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{4200DA15-7496-4EA0-AA6E-F47D7E6908AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAPI", "TestAPI\TestAPI.csproj", "{63DCC21A-2E87-442D-AF87-E0BDDA2DE1D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,10 +27,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2567933F-419D-4410-ABA4-E8D4936C6085}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2567933F-419D-4410-ABA4-E8D4936C6085}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2567933F-419D-4410-ABA4-E8D4936C6085}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2567933F-419D-4410-ABA4-E8D4936C6085}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B70E67BD-7F20-4F2A-A7F9-4D9E2F584AB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B70E67BD-7F20-4F2A-A7F9-4D9E2F584AB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B70E67BD-7F20-4F2A-A7F9-4D9E2F584AB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -55,6 +51,10 @@ Global
 		{D0499077-C13F-4B8C-8912-56E052A1EFA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0499077-C13F-4B8C-8912-56E052A1EFA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0499077-C13F-4B8C-8912-56E052A1EFA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63DCC21A-2E87-442D-AF87-E0BDDA2DE1D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63DCC21A-2E87-442D-AF87-E0BDDA2DE1D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63DCC21A-2E87-442D-AF87-E0BDDA2DE1D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63DCC21A-2E87-442D-AF87-E0BDDA2DE1D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

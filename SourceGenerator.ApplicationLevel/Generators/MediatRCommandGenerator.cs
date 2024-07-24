@@ -1,73 +1,69 @@
-﻿namespace SourceGenerator.ApplicationLevel.Generators
+﻿using Microsoft.CodeAnalysis;
+using SourceGenerator.Common.Data;
+using SourceGenerator.Common.Data.Attributes;
+using SourceGenerator.Common.Helper;
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Build", "CA1812:Avoid uninstantiated internal classes", Justification = "Source Generator")]
+namespace SourceGenerator.ApplicationLevel.Generators
 {
-    using Microsoft.CodeAnalysis;
-    using SourceGenerator.Common.Data;
-    using SourceGenerator.Common.Data.Attributes;
-    using SourceGenerator.Common.Helper;
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
+
 #pragma warning disable RS1035
-    namespace SourceGeneratorLib.Generators
+    [Generator]
+    public class MediatRCommandGenerator : ISourceGenerator
     {
-        [Generator]
-        public class MediatRCommandGenerator : ISourceGenerator
+        private Compilation compilation;
+        private readonly List<ClassesToInsert> classesToInsert = new List<ClassesToInsert>();
+        private bool hasOneOfReference;
+
+        public void Execute(GeneratorExecutionContext context)
         {
-            private Compilation compilation;
-            private readonly List<ClassesToInsert> classesToInsert = new List<ClassesToInsert>();
-            private bool hasOneOfReference;
-
-            public void Execute(GeneratorExecutionContext context)
+            compilation = context.Compilation;
+            var syntaxTrees = compilation.SyntaxTrees;
+            hasOneOfReference = compilation.References.Any(r => r.Display.Contains("OneOf"));
+            //System.Diagnostics.Debugger.Launch();
+            foreach (var syntaxTree in syntaxTrees)
             {
-                compilation = context.Compilation;
-                var syntaxTrees = compilation.SyntaxTrees;
-                hasOneOfReference = compilation.References.Any(r => r.Display.Contains("OneOf"));
-                //System.Diagnostics.Debugger.Launch();
-                foreach (var syntaxTree in syntaxTrees)
+                var root = syntaxTree.GetRoot();
+                var assemblyName = compilation.AssemblyName;
+
+                if (assemblyName == null || !assemblyName.Contains(".Application"))
                 {
-                    var root = syntaxTree.GetRoot();
-                    var assemblyName = compilation.AssemblyName;
+                    continue;
+                }
 
-                    if (assemblyName == null || !assemblyName.Contains(".Application"))
+                var domainReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Domain"));
+                if (domainReference != null)
+                {
+                    var domainAssembly = compilation.GetAssemblyOrModuleSymbol(domainReference) as IAssemblySymbol;
+
+                    if (domainAssembly != null)
                     {
-                        continue;
-                    }
+                        var classDeclarations = ClassDeclarationHelper.GetClassDeclarations(domainAssembly.GlobalNamespace, "MediatRCommand").ToList();
 
-                    var domainReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Domain"));
-                    if (domainReference != null)
-                    {
-                        var domainAssembly = compilation.GetAssemblyOrModuleSymbol(domainReference) as IAssemblySymbol;
-
-                        if (domainAssembly != null)
+                        foreach (var classDeclaration in classDeclarations)
                         {
-                            var classDeclarations = ClassDeclarationHelper.GetClassDeclarations(domainAssembly.GlobalNamespace, "MediatRCommand").ToList();
+                            var attributeData = classDeclaration.GetAttributes()
+                                .FirstOrDefault(ad => ad.AttributeClass.Name == nameof(GenerateCodeAttribute));
 
-                            foreach (var classDeclaration in classDeclarations)
+                            if (attributeData == null)
                             {
-                                var attributeData = classDeclaration.GetAttributes()
-                                    .FirstOrDefault(ad => ad.AttributeClass.Name == nameof(GenerateCodeAttribute));
+                                continue;
+                            }
 
-                                if (attributeData == null)
-                                {
-                                    continue;
-                                }
+                            var attributeArguments = attributeData.ConstructorArguments;
+                            var additionalType = attributeArguments.Length == 2 ? attributeArguments[1].Value as INamedTypeSymbol : null;
 
-                                var attributeArguments = attributeData.ConstructorArguments;
-                                var additionalType = attributeArguments.Length == 2 ? attributeArguments[1].Value as INamedTypeSymbol : null;
+                            var additionalTypeName = additionalType?.ToDisplayString() ?? "object";
+                            var additionalTypeNamespace = additionalType != null ? $"using {additionalType.ContainingNamespace.ToDisplayString()};" : string.Empty;
 
-                                var additionalTypeName = additionalType?.ToDisplayString() ?? "object";
-                                var additionalTypeNamespace = additionalType != null ? $"using {additionalType.ContainingNamespace.ToDisplayString()};" : string.Empty;
+                            var @namespace = classDeclaration.ContainingNamespace.ToDisplayString();
+                            var className = classDeclaration.Name;
 
-                                var @namespace = classDeclaration.ContainingNamespace.ToDisplayString();
-                                var className = classDeclaration.Name;
+                            var baseOutputDir = Path.Combine(className.Trim(), "Commands");
 
-                                var baseOutputDir = Path.Combine(className.Trim(), "Commands");
-
-                                var classToInsert = new ClassesToInsert
-                                {
-                                    ClassName = className,
-                                    GeneratedClasses = new List<GeneratedClass>
+                            var classToInsert = new ClassesToInsert
+                            {
+                                ClassName = className,
+                                GeneratedClasses = new List<GeneratedClass>
                                     {
                                         new GeneratedClass
                                         {
@@ -88,13 +84,11 @@
                                             PathToOutput = baseOutputDir
                                         }
                                     }
-                                };
+                            };
 
-                                classesToInsert.Add(classToInsert);
-                            }
+                            classesToInsert.Add(classToInsert);
                         }
                     }
-
                     if (classesToInsert.Count > 0)
                     {
                         CodeGenerationHelper.WriteGeneratedClasses(classesToInsert);
@@ -102,15 +96,16 @@
                     }
                 }
             }
+        }
 
-            private string GenerateCreateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
-            {
-                var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
-                var className = classDeclaration.Name;
-                var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
-                var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
+        private string GenerateCreateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
+        {
+            var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+            var className = classDeclaration.Name;
+            var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
+            var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
 
-                return $@"
+            return $@"
 using MediatR;
 {returnNamespace}
 using {namespaceName}.Dto;
@@ -146,14 +141,14 @@ namespace {namespaceName}.Commands
     }}
 }}
 ";
-            }
+        }
 
-            private string GenerateDeleteCommand(string namespaceName, INamedTypeSymbol classDeclaration)
-            {
-                var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
-                var className = classDeclaration.Name;
+        private string GenerateDeleteCommand(string namespaceName, INamedTypeSymbol classDeclaration)
+        {
+            var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+            var className = classDeclaration.Name;
 
-                return $@"
+            return $@"
 using MediatR;
 using {entityNamespace};
 using {namespaceName}.Repositories;
@@ -181,16 +176,16 @@ namespace {namespaceName}.Commands
     }}
 }}
 ";
-            }
+        }
 
-            private string GenerateUpdateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
-            {
-                var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
-                var className = classDeclaration.Name;
-                var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
-                var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
+        private string GenerateUpdateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
+        {
+            var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+            var className = classDeclaration.Name;
+            var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
+            var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
 
-                return $@"
+            return $@"
 using MediatR;
 {returnNamespace}
 using {namespaceName}.Dto;
@@ -228,11 +223,10 @@ namespace {namespaceName}.Commands
     }}
 }}
 ";
-            }
+        }
 
-            public void Initialize(GeneratorInitializationContext context)
-            {
-            }
+        public void Initialize(GeneratorInitializationContext context)
+        {
         }
     }
 }

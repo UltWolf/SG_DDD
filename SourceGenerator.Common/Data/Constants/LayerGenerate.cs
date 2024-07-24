@@ -4,7 +4,7 @@
     {
         public const string DtoLayer = "Dto";
         public const string MediatRCommandLayer = "MediatRCommand";
-        public const string EFRepositoryLayer = "EFRepository";
+        //public const string EFRepositoryLayer = "EFRepository";
 
     }
 }
