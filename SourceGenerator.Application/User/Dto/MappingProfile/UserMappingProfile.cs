@@ -1,8 +1,8 @@
 
 using AutoMapper;
-using SourceGenerator..User.Entity.Domains.User;
-
-namespace SourceGenerator..User.Entity.Application.User.Dto.MappingConfiguration;
+using SourceGenerator.Domain.User.Entity;  
+using SourceGenerator.Application.User.Dto;
+namespace SourceGenerator.Application.User.Dto.MappingConfiguration;
 
 public class UserMappingProfile : Profile
 {

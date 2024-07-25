@@ -1,5 +1,5 @@
 
-namespace SourceGenerator..User.Entity.Application.Dto
+namespace SourceGenerator.Application.User.Dto
 {
     public record UserDto
     {

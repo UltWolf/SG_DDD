@@ -55,7 +55,7 @@ namespace SourceGenerator.ApplicationLevel.Generators
                             var additionalTypeName = additionalType?.ToDisplayString() ?? "object";
                             var additionalTypeNamespace = additionalType != null ? $"using {additionalType.ContainingNamespace.ToDisplayString()};" : string.Empty;
 
-                            var @namespace = classDeclaration.ContainingNamespace.ToDisplayString();
+                            var @namespace = $"{assemblyName}.{classDeclaration.Name}";
                             var className = classDeclaration.Name;
 
                             var baseOutputDir = Path.Combine(className.Trim(), "Commands");
@@ -104,15 +104,16 @@ namespace SourceGenerator.ApplicationLevel.Generators
             var className = classDeclaration.Name;
             var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
             var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
+            var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
 
             return $@"
 using MediatR;
+using AutoMapper;
 {returnNamespace}
-using {namespaceName}.Dto;
-using {namespaceName}.Service;
+using {namespaceName}.Dto; 
 using {entityNamespace};
-using {namespaceName}.Repositories;
-using {namespaceName}.Errors;
+using {domainNamespace}.Repositories; 
+using {domainNamespace}.ValueTypes; 
 
 namespace {namespaceName}.Commands
 {{
@@ -147,12 +148,13 @@ namespace {namespaceName}.Commands
         {
             var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
             var className = classDeclaration.Name;
-
+            var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
             return $@"
 using MediatR;
+using AutoMapper;
 using {entityNamespace};
-using {namespaceName}.Repositories;
-
+using {domainNamespace}.Repositories;
+using {domainNamespace}.ValueTypes; 
 namespace {namespaceName}.Commands
 {{
     public class Delete{className}Command : IRequest
@@ -184,16 +186,15 @@ namespace {namespaceName}.Commands
             var className = classDeclaration.Name;
             var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
             var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
-
+            var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
             return $@"
 using MediatR;
+using AutoMapper;
 {returnNamespace}
-using {namespaceName}.Dto;
-using {namespaceName}.Service;
+using {namespaceName}.Dto; 
 using {entityNamespace};
-using {namespaceName}.Repositories;
-using {namespaceName}.Errors;
-
+using {domainNamespace}.Repositories; 
+using {domainNamespace}.ValueTypes; 
 namespace {namespaceName}.Commands
 {{
     public class Update{className}Command : IRequest<{returnType}>
@@ -204,14 +205,12 @@ namespace {namespaceName}.Commands
     public class Update{className}Handler : IRequestHandler<Update{className}Command, {returnType}>
     {{
         private readonly IMapper _mapper;
-        private readonly I{className}Repository _repository;
-        private readonly I{className}Service _service;
+        private readonly I{className}Repository _repository; 
 
-        public Update{className}Handler(I{className}Repository repository, IMapper mapper, I{className}Service service)
+        public Update{className}Handler(I{className}Repository repository, IMapper mapper)
         {{
             _mapper = mapper;
-            _repository = repository;
-            _service = service;
+            _repository = repository; 
         }}
 
         public async Task<{returnType}> Handle(Update{className}Command request, CancellationToken cancellationToken)

@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace SourceGenerator.Domain.Basic
 {
-    public sealed class StronglyTypedIdTypeConverter : TypeConverter
+    public sealed class StronglyTypedIdTypeConverter<Guid> : TypeConverter
 
     {
         public override bool CanConvertFrom(

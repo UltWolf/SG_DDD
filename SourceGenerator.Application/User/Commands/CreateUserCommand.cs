@@ -1,13 +1,14 @@
 
 using MediatR;
+using AutoMapper;
 
-using SourceGenerator.Domain.User.Entity.Dto;
-using SourceGenerator.Domain.User.Entity.Service;
+using SourceGenerator.Application.User.Dto;
+using SourceGenerator.Application.User.Service;
 using SourceGenerator.Domain.User.Entity;
 using SourceGenerator.Domain.User.Entity.Repositories;
-using SourceGenerator.Domain.User.Entity.Errors;
+using SourceGenerator.Application.User.Errors;
 
-namespace SourceGenerator.Domain.User.Entity.Commands
+namespace SourceGenerator.Application.User.Commands
 {
     public class CreateUserCommand : IRequest<UserDto>
     {

@@ -1,13 +1,13 @@
 
 using MediatR;
+using AutoMapper;
 
-using SourceGenerator.Domain.User.Entity.Dto;
-using SourceGenerator.Domain.User.Entity.Service;
+using SourceGenerator.Application.User.Dto; 
 using SourceGenerator.Domain.User.Entity;
 using SourceGenerator.Domain.User.Entity.Repositories;
-using SourceGenerator.Domain.User.Entity.Errors;
+using SourceGenerator.Application.User.Errors;
 
-namespace SourceGenerator.Domain.User.Entity.Commands
+namespace SourceGenerator.Application.User.Commands
 {
     public class UpdateUserCommand : IRequest<UserDto>
     {
@@ -17,14 +17,12 @@ namespace SourceGenerator.Domain.User.Entity.Commands
     public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UserDto>
     {
         private readonly IMapper _mapper;
-        private readonly IUserRepository _repository;
-        private readonly IUserService _service;
+        private readonly IUserRepository _repository; 
 
-        public UpdateUserHandler(IUserRepository repository, IMapper mapper, IUserService service)
+        public UpdateUserHandler(IUserRepository repository, IMapper mapper)
         {
             _mapper = mapper;
-            _repository = repository;
-            _service = service;
+            _repository = repository; 
         }
 
         public async Task<UserDto> Handle(UpdateUserCommand request, CancellationToken cancellationToken)

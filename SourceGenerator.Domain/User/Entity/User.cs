@@ -6,12 +6,10 @@ namespace SourceGenerator.Domain.User.Entity
 {
     [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.DtoLayer)]
     [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.MediatRCommandLayer, typeof(BasicError))]
-    [SourceGenerator.Common.Data.Attributes.GenerateCode("EFConfigurations")]
-    [SourceGenerator.Common.Data.Attributes.GenerateCode("TableConstants")]
     [SourceGenerator.DomainLevel.Generators.Repository.Attributes.GenerateRepository(
         typeof(ApplicationDbContext),
-        typeof(BasicRepository),
-        typeof(IStronglyTypeGuidId), typeof(StronglyTypedIdTypeConverter))]
+        typeof(BasicRepository<object, object, object>),
+        typeof(IStronglyTypeGuidId), typeof(StronglyTypedIdTypeConverter<Guid>))]
     // [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.EFRepositoryLayer)]
     public class User
     {

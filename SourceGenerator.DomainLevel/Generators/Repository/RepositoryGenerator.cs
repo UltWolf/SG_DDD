@@ -136,8 +136,7 @@ namespace {namespaceName}.Constants
             return $@"
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using {namespaceName}.Constants;
-using {namespaceName}.Entities;
+using {namespaceName}.Constants; 
 
 namespace {namespaceName}.Configurations
 {{
@@ -178,7 +177,7 @@ namespace {namespaceName}.Configurations
             var repositoryType = GetContextTypeFromAttribute(classDeclaration, 1);
             var repositoryNamespace = repositoryType?.ContainingNamespace.ToDisplayString();
             var strongType = GetContextTypeFromAttribute(classDeclaration, 2);
-            var strongNameId = strongType != null ? $"{className}Id," : "";
+            var strongNameId = strongType != null ? $"{className}Id" : "";
             var contextUsing = !string.IsNullOrEmpty(contextNamespace) ? $"using {contextNamespace};" : string.Empty;
 
             var filterName = baseFilterClass != null ? $",{className}Filter" : string.Empty;
@@ -186,6 +185,7 @@ namespace {namespaceName}.Configurations
             var repositoryInterface = $@"
 {contextUsing}
 {filterUsing}
+{$"using {namespaceName}.ValueTypes;"}
 {$"using {repositoryNamespace};"}
 namespace {namespaceName}.Repositories
 {{
@@ -195,7 +195,7 @@ namespace {namespaceName}.Repositories
 ";
             var repositoryImpl = $@"
  
-    public class {className}Repository : {repositoryType.Name}<{className},{strongNameId} {contextType.Name}{filterName}>, I{className}Repository
+    public class {className}Repository : {repositoryType.Name}<{className},{strongNameId},{contextType.Name}{filterName}>, I{className}Repository
     {{
         public {className}Repository({contextType.Name} context) : base(context)
         {{

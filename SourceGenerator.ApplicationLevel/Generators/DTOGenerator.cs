@@ -43,7 +43,7 @@ namespace SourceGeneratorLib.Generators
 
                         foreach (var classDeclaration in classDeclarations)
                         {
-                            var @namespace = classDeclaration.ContainingNamespace.ToDisplayString().Replace("Domain", "");
+                            var @namespace = $"{assemblyName}.{classDeclaration.Name}";
                             var className = classDeclaration.Name;
 
                             var baseOutputDir = Path.Combine(className.Trim(), StringConstants.DTOEnding);
@@ -87,11 +87,12 @@ namespace SourceGeneratorLib.Generators
         }
         private string GenerateMappingProfile(string namespaceName, string className, INamedTypeSymbol classSymbol)
         {
+            var usingEntity = $"using {classSymbol.ContainingNamespace.ToDisplayString()};";
             return $@"
 using AutoMapper;
-using {namespaceName}.Domains.{className};
-
-namespace {namespaceName}.Application.{className}.{StringConstants.DTOEnding}.MappingConfiguration;
+{usingEntity}  
+using {namespaceName}.Dto;
+namespace {namespaceName}.{StringConstants.DTOEnding}.MappingConfiguration;
 
 public class {className}MappingProfile : Profile
 {{
@@ -110,7 +111,7 @@ public class {className}MappingProfile : Profile
 
         private string GetDtoNamespace(string namespaceName)
         {
-            return $"namespace {namespaceName}.Application.{StringConstants.DTOEnding}";
+            return $"namespace {namespaceName}.{StringConstants.DTOEnding}";
         }
         private string GenerateDTO(string namespaceName, string className, INamedTypeSymbol classSymbol)
         {
