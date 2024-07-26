@@ -57,7 +57,7 @@
             foreach (var classDeclaration in domainClassDeclarations)
             {
                 var @namespace = classDeclaration.ContainingNamespace.ToDisplayString();
-                var className = classDeclaration.Name;
+                var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
                 var baseOutputDir = className.Trim();
 
                 var classToInsert = new ClassesToInsert
@@ -75,7 +75,7 @@
                         new GeneratedClass
                         {
                             ClassName = $"{className}Id.cs",
-                            Generated = GenerateValueTypeId(@namespace, className,classDeclaration),
+                            Generated = GenerateValueTypeId(@namespace, classDeclaration),
                             PathToOutput = Path.Combine(baseOutputDir,"ValueTypes")
                         },
                            new GeneratedClass
@@ -87,13 +87,13 @@
                          new GeneratedClass
                         {
                             ClassName = $"{className}Configuration.cs",
-                            Generated = GenerateEntityConfigurationClass(@namespace,  className),
+                            Generated = GenerateEntityConfigurationClass(@namespace,  className,classDeclaration),
                             PathToOutput = Path.Combine(baseOutputDir,"Configuration")
                         },
                         new GeneratedClass
                         {
                             ClassName = $"{className}Filter.cs",
-                            Generated = GenerateFilter(@namespace, baseFilterClass, baseFilterNamespace, className),
+                            Generated = GenerateFilter(@namespace, baseFilterClass, baseFilterNamespace,  ClassDeclarationHelper.GetNameForClass(classDeclaration)),
                             PathToOutput = Path.Combine(baseOutputDir,"Filter")
                         }
                     }
@@ -130,9 +130,9 @@ namespace {namespaceName}.Constants
 }}
 ";
         }
-        private string GenerateEntityConfigurationClass(string namespaceName, string className)
+        private string GenerateEntityConfigurationClass(string namespaceName, string className, INamedTypeSymbol classDeclaration)
         {
-            var entityName = className.Replace("Configuration", string.Empty);
+
             return $@"
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -140,11 +140,11 @@ using {namespaceName}.Constants;
 
 namespace {namespaceName}.Configurations
 {{
-    public class {className} : IEntityTypeConfiguration<{entityName}>
+    public class {className}Configuration : IEntityTypeConfiguration<{classDeclaration.Name}>
     {{
-        public void Configure(EntityTypeBuilder<{entityName}> builder)
+        public void Configure(EntityTypeBuilder<{classDeclaration.Name}> builder)
         {{
-            builder.ToTable({entityName}Constants.TABLE_NAME);
+            builder.ToTable({className}Constants.TABLE_NAME);
  
         }}
     }}
@@ -171,7 +171,7 @@ namespace {namespaceName}.Configurations
         }
         private string GenerateRepository(string namespaceName, INamedTypeSymbol baseFilterClass, INamedTypeSymbol classDeclaration)
         {
-            var className = classDeclaration.Name;
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
             var contextType = GetContextTypeFromAttribute(classDeclaration, 0);
             var contextNamespace = contextType?.ContainingNamespace.ToDisplayString();
             var repositoryType = GetContextTypeFromAttribute(classDeclaration, 1);
@@ -189,13 +189,13 @@ namespace {namespaceName}.Configurations
 {$"using {repositoryNamespace};"}
 namespace {namespaceName}.Repositories
 {{
-    public interface I{className}Repository : I{repositoryType.Name}<{className}, {strongNameId}{filterName}>
+    public interface I{className}Repository : I{repositoryType.Name}<{classDeclaration.Name}, {strongNameId}{filterName}>
     {{ 
     }} 
 ";
             var repositoryImpl = $@"
  
-    public class {className}Repository : {repositoryType.Name}<{className},{strongNameId},{contextType.Name}{filterName}>, I{className}Repository
+    public class {className}Repository : {repositoryType.Name}<{classDeclaration.Name},{strongNameId},{contextType.Name}{filterName}>, I{className}Repository
     {{
         public {className}Repository({contextType.Name} context) : base(context)
         {{
@@ -208,7 +208,7 @@ namespace {namespaceName}.Repositories
 
 
 
-        private string GenerateValueTypeId(string namespaceName, string className, INamedTypeSymbol classDeclaration)
+        private string GenerateValueTypeId(string namespaceName, INamedTypeSymbol classDeclaration)
         {
             var strongType = GetContextTypeFromAttribute(classDeclaration, 2);
             var strongConvertor = GetContextTypeFromAttribute(classDeclaration, 3);
@@ -216,6 +216,7 @@ namespace {namespaceName}.Repositories
             {
                 return "";
             }
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
             var strongTypeNamespace = $"using  {strongType.ContainingNamespace.ToDisplayString()};";
             var strongConvertorNamespace = $"using  {strongConvertor.ContainingNamespace.ToDisplayString()};";
             var strongNameId = strongType != null ? $"{className}Id" : "";

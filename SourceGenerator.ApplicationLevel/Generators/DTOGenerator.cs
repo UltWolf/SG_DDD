@@ -43,8 +43,8 @@ namespace SourceGeneratorLib.Generators
 
                         foreach (var classDeclaration in classDeclarations)
                         {
-                            var @namespace = $"{assemblyName}.{classDeclaration.Name}";
-                            var className = classDeclaration.Name;
+                            var @namespace = $"{assemblyName}.{ClassDeclarationHelper.GetNameForClass(classDeclaration)}";
+                            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
 
                             var baseOutputDir = Path.Combine(className.Trim(), StringConstants.DTOEnding);
 
@@ -98,8 +98,8 @@ public class {className}MappingProfile : Profile
 {{
     public {className}MappingProfile()
     {{
-        CreateMap<{className}, {className}{StringConstants.DTOEnding}>();
-        CreateMap<Create{className}{StringConstants.DTOEnding}, {className}>();
+        CreateMap<{classSymbol.Name}, {className}{StringConstants.DTOEnding}>();
+        CreateMap<Create{className}{StringConstants.DTOEnding}, {classSymbol.Name}>();
     }}
 }}";
         }

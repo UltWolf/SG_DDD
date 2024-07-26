@@ -29,6 +29,10 @@ namespace SourceGenerator.Common.Helper
 
             return classDeclarations;
         }
+        public static string GetNameForClass(INamedTypeSymbol classDeclaration)
+        {
+            return classDeclaration.Name.Replace("Entity", "");
+        }
         private static bool HasGenerateCodeAttribute(INamedTypeSymbol classDeclaration, string attributeValue)
         {
             var generateCodeAttribute = classDeclaration.GetAttributes().FirstOrDefault(attr =>

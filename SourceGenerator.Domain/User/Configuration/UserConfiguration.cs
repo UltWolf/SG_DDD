@@ -5,9 +5,9 @@ using SourceGenerator.Domain.User.Entity.Constants;
 
 namespace SourceGenerator.Domain.User.Entity.Configurations
 {
-    public class User : IEntityTypeConfiguration<User>
+    public class UserConfiguration : IEntityTypeConfiguration<UserEntity>
     {
-        public void Configure(EntityTypeBuilder<User> builder)
+        public void Configure(EntityTypeBuilder<UserEntity> builder)
         {
             builder.ToTable(UserConstants.TABLE_NAME);
  

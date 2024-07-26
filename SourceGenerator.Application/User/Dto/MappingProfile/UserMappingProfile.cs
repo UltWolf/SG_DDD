@@ -8,7 +8,7 @@ public class UserMappingProfile : Profile
 {
     public UserMappingProfile()
     {
-        CreateMap<User, UserDto>();
-        CreateMap<CreateUserDto, User>();
+        CreateMap<UserEntity, UserDto>();
+        CreateMap<CreateUserDto, UserEntity>();
     }
 }

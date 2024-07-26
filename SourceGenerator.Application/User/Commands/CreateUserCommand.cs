@@ -1,21 +1,21 @@
 
 using MediatR;
 using AutoMapper;
-
-using SourceGenerator.Application.User.Dto;
-using SourceGenerator.Application.User.Service;
+using OneOf;
+using SourceGenerator.Domain.Basic;
+using SourceGenerator.Application.User.Dto; 
 using SourceGenerator.Domain.User.Entity;
-using SourceGenerator.Domain.User.Entity.Repositories;
-using SourceGenerator.Application.User.Errors;
+using SourceGenerator.Domain.User.Entity.Repositories; 
+using SourceGenerator.Domain.User.Entity.ValueTypes; 
 
 namespace SourceGenerator.Application.User.Commands
 {
-    public class CreateUserCommand : IRequest<UserDto>
+    public class CreateUserCommand : IRequest<OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>>
     {
         public CreateUserDto NewUser { get; init; } = null!;
     }
 
-    public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
+    public class CreateUserHandler : IRequestHandler<CreateUserCommand, OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>>
     {
         private readonly IMapper _mapper;
         private readonly IUserRepository _repository;
@@ -26,9 +26,9 @@ namespace SourceGenerator.Application.User.Commands
             _repository = repository;
         }
 
-        public async Task<UserDto> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+        public async Task<OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var entity = _mapper.Map<User>(request.NewUser);
+            var entity = _mapper.Map<UserEntity>(request.NewUser);
             var newEntity = await _repository.AddAsync(entity, cancellationToken);
             return _mapper.Map<UserDto>(newEntity);
         }

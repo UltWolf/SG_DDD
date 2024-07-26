@@ -4,9 +4,9 @@ namespace SourceGenerator.Domain.Basic
 {
     public interface IBasicRepository<T, F>
     {
-        T AddAsync(T Entity, CancellationToken token);
-        T DeleteAsync(T Entity, CancellationToken token);
-        T UpdateAsync(T Entity, CancellationToken token);
+        Task<T> AddAsync(T Entity, CancellationToken token);
+        Task<T> DeleteAsync(T Entity, CancellationToken token);
+        Task<T> UpdateAsync(T Entity, CancellationToken token);
     }
     public class BasicRepository<T, F, L> : IBasicRepository<T, F>
     {
@@ -15,17 +15,17 @@ namespace SourceGenerator.Domain.Basic
         {
             Context = applicationDbContext;
         }
-        public T AddAsync(T Entity, CancellationToken token)
+        public Task<T> AddAsync(T Entity, CancellationToken token)
         {
-            return Entity;
+            return Task.FromResult(Entity);
         }
-        public T DeleteAsync(T Entity, CancellationToken token)
+        public Task<T> DeleteAsync(T Entity, CancellationToken token)
         {
-            return Entity;
+            return Task.FromResult(Entity);
         }
-        public T UpdateAsync(T Entity, CancellationToken token)
+        public Task<T> UpdateAsync(T Entity, CancellationToken token)
         {
-            return Entity;
+            return Task.FromResult(Entity);
         }
     }
 }

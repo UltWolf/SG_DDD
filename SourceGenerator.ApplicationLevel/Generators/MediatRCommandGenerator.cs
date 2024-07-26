@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using SourceGenerator.Common.Data;
 using SourceGenerator.Common.Data.Attributes;
+using SourceGenerator.Common.Data.Constants;
 using SourceGenerator.Common.Helper;
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Build", "CA1812:Avoid uninstantiated internal classes", Justification = "Source Generator")]
 namespace SourceGenerator.ApplicationLevel.Generators
@@ -19,7 +20,7 @@ namespace SourceGenerator.ApplicationLevel.Generators
             compilation = context.Compilation;
             var syntaxTrees = compilation.SyntaxTrees;
             hasOneOfReference = compilation.References.Any(r => r.Display.Contains("OneOf"));
-            //System.Diagnostics.Debugger.Launch();
+            // System.Diagnostics.Debugger.Launch();
             foreach (var syntaxTree in syntaxTrees)
             {
                 var root = syntaxTree.GetRoot();
@@ -37,12 +38,12 @@ namespace SourceGenerator.ApplicationLevel.Generators
 
                     if (domainAssembly != null)
                     {
-                        var classDeclarations = ClassDeclarationHelper.GetClassDeclarations(domainAssembly.GlobalNamespace, "MediatRCommand").ToList();
+                        var classDeclarations = ClassDeclarationHelper.GetClassDeclarations(domainAssembly.GlobalNamespace, LayerGenerate.MediatRCommandLayer).ToList();
 
                         foreach (var classDeclaration in classDeclarations)
                         {
                             var attributeData = classDeclaration.GetAttributes()
-                                .FirstOrDefault(ad => ad.AttributeClass.Name == nameof(GenerateCodeAttribute));
+                                .FirstOrDefault(ad => ad.AttributeClass.Name == nameof(GenerateCodeAttribute) && ad.ConstructorArguments[0].Value.ToString().Contains(LayerGenerate.MediatRCommandLayer));
 
                             if (attributeData == null)
                             {
@@ -55,8 +56,8 @@ namespace SourceGenerator.ApplicationLevel.Generators
                             var additionalTypeName = additionalType?.ToDisplayString() ?? "object";
                             var additionalTypeNamespace = additionalType != null ? $"using {additionalType.ContainingNamespace.ToDisplayString()};" : string.Empty;
 
-                            var @namespace = $"{assemblyName}.{classDeclaration.Name}";
-                            var className = classDeclaration.Name;
+                            var @namespace = $"{assemblyName}.{ClassDeclarationHelper.GetNameForClass(classDeclaration)}";
+                            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
 
                             var baseOutputDir = Path.Combine(className.Trim(), "Commands");
 
@@ -101,7 +102,7 @@ namespace SourceGenerator.ApplicationLevel.Generators
         private string GenerateCreateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
         {
             var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
-            var className = classDeclaration.Name;
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
             var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
             var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
             var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
@@ -135,7 +136,7 @@ namespace {namespaceName}.Commands
 
         public async Task<{returnType}> Handle(Create{className}Command request, CancellationToken cancellationToken)
         {{
-            var entity = _mapper.Map<{className}>(request.New{className});
+            var entity = _mapper.Map<{classDeclaration.Name}>(request.New{className});
             var newEntity = await _repository.AddAsync(entity, cancellationToken);
             return _mapper.Map<{className}Dto>(newEntity);
         }}
@@ -147,7 +148,7 @@ namespace {namespaceName}.Commands
         private string GenerateDeleteCommand(string namespaceName, INamedTypeSymbol classDeclaration)
         {
             var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
-            var className = classDeclaration.Name;
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration); ;
             var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
             return $@"
 using MediatR;
@@ -173,7 +174,7 @@ namespace {namespaceName}.Commands
 
         public Task Handle(Delete{className}Command request, CancellationToken cancellationToken)
         {{
-            return _repository.DeleteAsync(new {className}() {{ Id = new {className}Id(request.{className}Id) }}, cancellationToken);
+            return _repository.DeleteAsync(new {classDeclaration.Name}() {{ Id = new {className}Id(request.{className}Id) }}, cancellationToken);
         }}
     }}
 }}
@@ -183,7 +184,7 @@ namespace {namespaceName}.Commands
         private string GenerateUpdateCommand(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
         {
             var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
-            var className = classDeclaration.Name;
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
             var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
             var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
             var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
@@ -215,7 +216,7 @@ namespace {namespaceName}.Commands
 
         public async Task<{returnType}> Handle(Update{className}Command request, CancellationToken cancellationToken)
         {{
-            var entity = _mapper.Map<{className}>(request.Update{className});
+            var entity = _mapper.Map<{classDeclaration.Name}>(request.Update{className});
             var updatedEntity = await _repository.UpdateAsync(entity, cancellationToken);
             return _mapper.Map<{className}Dto>(updatedEntity);
         }}
