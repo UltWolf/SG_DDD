@@ -12,7 +12,7 @@ namespace SourceGenerator.Application.User.Commands
 {
     public class CreateUserCommand : IRequest<OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>>
     {
-        public CreateUserDto NewUser { get; init; } = null!;
+        public CreateUserDto User { get; init; } = null!;
     }
 
     public class CreateUserHandler : IRequestHandler<CreateUserCommand, OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>>
@@ -28,7 +28,7 @@ namespace SourceGenerator.Application.User.Commands
 
         public async Task<OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var entity = _mapper.Map<UserEntity>(request.NewUser);
+            var entity = _mapper.Map<UserEntity>(request.User);
             var newEntity = await _repository.AddAsync(entity, cancellationToken);
             return _mapper.Map<UserDto>(newEntity);
         }

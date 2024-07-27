@@ -10,7 +10,7 @@ namespace SourceGenerator.Domain.User.Entity
     [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.MediatRCommandLayer, typeof(BasicError))]
     [SourceGenerator.DomainLevel.Generators.Repository.Attributes.GenerateRepository(
         typeof(ApplicationDbContext),
-        typeof(BasicRepository<object, object, object>),
+        typeof(BasicRepository<object, object, object, object>),
         typeof(IStronglyTypeGuidId), typeof(StronglyTypedIdTypeConverter<Guid>))]
     // [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.EFRepositoryLayer)]
     public class UserEntity

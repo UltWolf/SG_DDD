@@ -1,8 +1,9 @@
 
 using MediatR;
+using AutoMapper;
 using SourceGenerator.Domain.User.Entity;
 using SourceGenerator.Domain.User.Entity.Repositories;
-using SourceGenerator.Domain.User.Entity.ValueTypes;
+using SourceGenerator.Domain.User.Entity.ValueTypes; 
 namespace SourceGenerator.Application.User.Commands
 {
     public class DeleteUserCommand : IRequest

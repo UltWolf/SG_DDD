@@ -83,7 +83,19 @@ namespace SourceGenerator.ApplicationLevel.Generators
                                             ClassName = $"Update{className}Command.cs",
                                             Generated = GenerateUpdateCommand(@namespace, classDeclaration, additionalTypeName, additionalTypeNamespace),
                                             PathToOutput = baseOutputDir
-                                        }
+                                        },
+                                          new GeneratedClass
+                                    {
+                                        ClassName = $"Get{className}Query.cs",
+                                        Generated = GenerateGetQuery(@namespace, classDeclaration, additionalTypeName, additionalTypeNamespace),
+                                        PathToOutput = baseOutputDir.Replace("Commands", "Queries")
+                                    },
+                                    new GeneratedClass
+                                    {
+                                        ClassName = $"Get{className}sQuery.cs",
+                                        Generated = GenerateGetAllQuery(@namespace, classDeclaration, additionalTypeName, additionalTypeNamespace),
+                                        PathToOutput = baseOutputDir.Replace("Commands", "Queries")
+                                    }
                                     }
                             };
 
@@ -120,7 +132,7 @@ namespace {namespaceName}.Commands
 {{
     public class Create{className}Command : IRequest<{returnType}>
     {{
-        public Create{className}Dto New{className} {{ get; init; }} = null!;
+        public Create{className}Dto {className} {{ get; init; }} = null!;
     }}
 
     public class Create{className}Handler : IRequestHandler<Create{className}Command, {returnType}>
@@ -136,7 +148,7 @@ namespace {namespaceName}.Commands
 
         public async Task<{returnType}> Handle(Create{className}Command request, CancellationToken cancellationToken)
         {{
-            var entity = _mapper.Map<{classDeclaration.Name}>(request.New{className});
+            var entity = _mapper.Map<{classDeclaration.Name}>(request.{className});
             var newEntity = await _repository.AddAsync(entity, cancellationToken);
             return _mapper.Map<{className}Dto>(newEntity);
         }}
@@ -148,7 +160,7 @@ namespace {namespaceName}.Commands
         private string GenerateDeleteCommand(string namespaceName, INamedTypeSymbol classDeclaration)
         {
             var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
-            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration); ;
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
             var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
             return $@"
 using MediatR;
@@ -200,7 +212,7 @@ namespace {namespaceName}.Commands
 {{
     public class Update{className}Command : IRequest<{returnType}>
     {{
-        public {className}Dto Update{className} {{ get; init; }} = null!;
+        public {className}Dto {className} {{ get; init; }} = null!;
     }}
 
     public class Update{className}Handler : IRequestHandler<Update{className}Command, {returnType}>
@@ -216,7 +228,7 @@ namespace {namespaceName}.Commands
 
         public async Task<{returnType}> Handle(Update{className}Command request, CancellationToken cancellationToken)
         {{
-            var entity = _mapper.Map<{classDeclaration.Name}>(request.Update{className});
+            var entity = _mapper.Map<{classDeclaration.Name}>(request.{className});
             var updatedEntity = await _repository.UpdateAsync(entity, cancellationToken);
             return _mapper.Map<{className}Dto>(updatedEntity);
         }}
@@ -224,7 +236,93 @@ namespace {namespaceName}.Commands
 }}
 ";
         }
+        private string GenerateGetQuery(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
+        {
+            var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
+            var returnType = hasOneOfReference ? $"OneOf<{className}Dto, {additionalTypeName}>" : $"{className}Dto";
+            var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
+            var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
 
+            return $@"
+using MediatR;
+using AutoMapper;
+{returnNamespace}
+using {namespaceName}.Dto;
+using {domainNamespace}.Repositories;
+using {domainNamespace}.ValueTypes;
+
+namespace {namespaceName}.Queries
+{{
+    public class Get{className}Query : IRequest<{returnType}>
+    {{
+        public required Guid {className}Id {{ get; init; }}
+    }}
+
+    public class Get{className}Handler : IRequestHandler<Get{className}Query, {returnType}>
+    {{
+        private readonly IMapper _mapper;
+        private readonly I{className}Repository _repository;
+
+        public Get{className}Handler(I{className}Repository repository, IMapper mapper)
+        {{
+            _mapper = mapper;
+            _repository = repository;
+        }}
+
+        public async Task<{returnType}> Handle(Get{className}Query request, CancellationToken cancellationToken)
+        {{
+            var entity = await _repository.GetByIdAsync(new {className}Id(request.{className}Id), cancellationToken);
+            return entity == null ? new {additionalTypeName}() : _mapper.Map<{className}Dto>(entity);
+        }}
+    }}
+}}
+";
+        }
+
+        private string GenerateGetAllQuery(string namespaceName, INamedTypeSymbol classDeclaration, string additionalTypeName, string additionalTypeNamespace)
+        {
+            var entityNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+            var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
+            var returnType = hasOneOfReference ? $"OneOf<List<{className}Dto>, {additionalTypeName}>" : $"List<{className}Dto>";
+            var returnNamespace = hasOneOfReference ? $"using OneOf;{Environment.NewLine}{additionalTypeNamespace}" : string.Empty;
+            var domainNamespace = classDeclaration.ContainingNamespace.ToDisplayString();
+
+            return $@"
+using MediatR;
+using AutoMapper;
+{returnNamespace}
+using {namespaceName}.Dto;
+using {domainNamespace}.Repositories;
+using {domainNamespace}.ValueTypes;
+using {domainNamespace}.Filters;
+namespace {namespaceName}.Queries
+{{
+    public class Get{className}sQuery : IRequest<{returnType}>
+    {{
+        public {className}Filter Filter{{get;set;}}
+    }}
+
+    public class Get{className}sHandler : IRequestHandler<Get{className}sQuery, {returnType}>
+    {{
+        private readonly IMapper _mapper;
+        private readonly I{className}Repository _repository;
+
+        public Get{className}sHandler(I{className}Repository repository, IMapper mapper)
+        {{
+            _mapper = mapper;
+            _repository = repository;
+        }}
+
+        public async Task<{returnType}> Handle(Get{className}sQuery request, CancellationToken cancellationToken)
+        {{
+            var entities = await _repository.GetFiltered(request.Filter,cancellationToken);
+            return entities.Any() ? _mapper.Map<List<{className}Dto>>(entities) : new {additionalTypeName}();
+        }}
+    }}
+}}
+";
+        }
         public void Initialize(GeneratorInitializationContext context)
         {
         }

@@ -11,7 +11,7 @@ namespace SourceGenerator.Application.User.Commands
 {
     public class UpdateUserCommand : IRequest<OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>>
     {
-        public UserDto UpdateUser { get; init; } = null!;
+        public UserDto User { get; init; } = null!;
     }
 
     public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>>
@@ -27,7 +27,7 @@ namespace SourceGenerator.Application.User.Commands
 
         public async Task<OneOf<UserDto, SourceGenerator.Domain.Basic.BasicError>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
         {
-            var entity = _mapper.Map<UserEntity>(request.UpdateUser);
+            var entity = _mapper.Map<UserEntity>(request.User);
             var updatedEntity = await _repository.UpdateAsync(entity, cancellationToken);
             return _mapper.Map<UserDto>(updatedEntity);
         }

@@ -20,7 +20,7 @@ namespace SourceGenerator.APILevel.Generators
         {
             compilation = context.Compilation;
             var syntaxTrees = compilation.SyntaxTrees;
-
+            //System.Diagnostics.Debugger.Launch();
             foreach (var syntaxTree in syntaxTrees)
             {
                 var root = syntaxTree.GetRoot();
@@ -74,30 +74,33 @@ namespace SourceGenerator.APILevel.Generators
             }
         }
 
-        private string GenerateController(string namespaceName, string className, string baseController, List<string> additionalNamespaces)
+        private string GenerateController(string namespaceName, string className, string baseController, AssemblyRefs assemblyRefs)
         {
-            var baseControllerInheritance = string.IsNullOrWhiteSpace(baseController) ? "ApiBaseController" : baseController.Split('.').Last();
+            var baseControllerInheritance = string.IsNullOrWhiteSpace(baseController) ? "ControllerBase" : baseController.Split('.').Last();
             var usingBaseController = string.IsNullOrWhiteSpace(baseController) ? "" : $"using {string.Join(".", baseController.Split('.').Reverse().Skip(1).Reverse())};";
-            var additionalUsings = string.Join(Environment.NewLine, additionalNamespaces.Select(ns => $"using {ns};"));
+
             var getAction = GenerateGetAction(className);
             var postAction = GeneratePostAction(className);
             var deleteAction = GenerateDeleteAction(className);
+            var putAction = GeneratePutAction(className);
 
             return $@"
-{usingBaseController}
-{additionalUsings}
+{usingBaseController} 
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
+using {assemblyRefs.ApplicationName}.{className}.Dto;
+using {assemblyRefs.ApplicationName}.{className}.Commands;
+using {assemblyRefs.ApplicationName}.{className}.Queries;;
+using {assemblyRefs.DomainName}.{className}.Entity.Filters; 
 namespace API.Controllers;
 
 [Route(""api/[controller]"")]
 [ApiController]
 public class {className}Controller : {baseControllerInheritance}
 {{
+    {putAction} 
     {getAction}
-
     {postAction}
-
     {deleteAction}
 }}";
         }
@@ -118,41 +121,31 @@ public class {className}Controller : {baseControllerInheritance}
             return baseController?.ToDisplayString();
         }
 
-        private List<string> GetAdditionalNamespaces(Compilation compilation)
+        private AssemblyRefs GetAdditionalNamespaces(Compilation compilation)
         {
-            var namespaces = new List<string>();
+            var assemblyRef = new AssemblyRefs();
 
             var applicationReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Application"));
             if (applicationReference != null)
             {
-                var applicationAssembly = compilation.GetAssemblyOrModuleSymbol(applicationReference) as IAssemblySymbol;
-                if (applicationAssembly != null)
-                {
-                    namespaces.AddRange(GetNamespacesFromAssembly(applicationAssembly));
-                }
+                var applicationRef = compilation.GetAssemblyOrModuleSymbol(applicationReference) as IAssemblySymbol;
+                assemblyRef.ApplicationName = applicationRef.Name.ToString();
             }
 
-            var domainsReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Domains"));
+            var domainsReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Domain"));
             if (domainsReference != null)
             {
-                var domainsAssembly = compilation.GetAssemblyOrModuleSymbol(domainsReference) as IAssemblySymbol;
-                if (domainsAssembly != null)
-                {
-                    namespaces.AddRange(GetNamespacesFromAssembly(domainsAssembly));
-                }
+                assemblyRef.DomainName = (compilation.GetAssemblyOrModuleSymbol(domainsReference) as IAssemblySymbol).Name.ToString();
             }
 
             var infrastructureReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Infrastructure"));
             if (infrastructureReference != null)
             {
-                var infrastructureAssembly = compilation.GetAssemblyOrModuleSymbol(infrastructureReference) as IAssemblySymbol;
-                if (infrastructureAssembly != null)
-                {
-                    namespaces.AddRange(GetNamespacesFromAssembly(infrastructureAssembly));
-                }
+                assemblyRef.InfrastructureName = (compilation.GetAssemblyOrModuleSymbol(infrastructureReference) as IAssemblySymbol).Name.ToString();
+
             }
 
-            return namespaces;
+            return assemblyRef;
         }
 
         private List<string> GetNamespacesFromAssembly(IAssemblySymbol assemblySymbol)
@@ -169,7 +162,19 @@ public class {className}Controller : {baseControllerInheritance}
 
             return namespaces;
         }
-
+        private string GeneratePutAction(string className)
+        {
+            return $@"
+    [ProducesResponseType(200, Type = typeof(List<{className}Dto>))]
+    [HttpPut]
+    public async Task<IActionResult> Put([FromBody] {className}Dto dto)
+    {{
+        return Ok(await Mediator.Send(new Update{className}Command
+        {{
+            {className} = dto
+        }}));
+    }}";
+        }
         private string GenerateGetAction(string className)
         {
             return $@"
@@ -177,7 +182,7 @@ public class {className}Controller : {baseControllerInheritance}
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] {className}Filter filter)
     {{
-        return ReturnOkResult<List<{className}Dto>>, TrainingError, TrainingErrorCodes>(await Mediator.Send(new Get{className}sQuery
+        return Ok(await Mediator.Send(new Get{className}sQuery
         {{
             Filter = filter
         }}));
@@ -195,8 +200,10 @@ public class {className}Controller : {baseControllerInheritance}
         {{
             {className} = create{className}Dto
         }});
-
-        return ReturnOkResult<{className}Dto, TrainingError, TrainingErrorCodes>(result);
+        if(result!=null){{
+            return Ok(result);
+        }}
+        return BadRequest();
     }}";
         }
 
