@@ -1,11 +1,11 @@
 
-
+ 
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using SourceGenerator.Application.User.Commands;
 using SourceGenerator.Application.User.Dto;
+using SourceGenerator.Application.User.Commands;
 using SourceGenerator.Application.User.Queries;
-using SourceGenerator.Domain.User.Entity.Filters;
+using SourceGenerator.Domain.User.Entity.Filters; 
 namespace API.Controllers;
 
 [Route("api/[controller]")]
@@ -13,6 +13,12 @@ namespace API.Controllers;
 public class UserController : ControllerBase
 {
 
+                 private readonly ISender Mediator;
+                 public UserController(ISender mediator){
+                          Mediator = mediator;
+                 }
+              
+    
     [ProducesResponseType(200, Type = typeof(List<UserDto>))]
     [HttpPut]
     public async Task<IActionResult> Put([FromBody] UserDto dto)
@@ -21,18 +27,18 @@ public class UserController : ControllerBase
         {
             User = dto
         }));
-    }
-
+    } 
+    
     [ProducesResponseType(200, Type = typeof(List<UserDto>))]
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] UserFilter filter)
     {
-        return Ok((await Mediator.Send(new GetUsersQuery
+        return Ok(await Mediator.Send(new GetUsersQuery
         {
             Filter = filter
-        })));
+        }));
     }
-
+    
     [ProducesResponseType(200, Type = typeof(UserDto))]
     [HttpPost]
     public async Task<IActionResult> Post(CreateUserDto createUserDto)
@@ -41,13 +47,12 @@ public class UserController : ControllerBase
         {
             User = createUserDto
         });
-        if (result != null)
-        {
-            return Ok(result)
-}
+        if(result.AsT0!=null){
+            return Ok(result);
+        }
         return BadRequest();
     }
-
+    
     [ProducesResponseType(200)]
     [HttpDelete("{UserId}")]
     public async Task<IActionResult> Delete(Guid UserId)

@@ -20,7 +20,7 @@
             var domainClassDeclarations = new List<INamedTypeSymbol>();
             var baseFilterClass = (INamedTypeSymbol)null;
             var baseFilterNamespace = string.Empty;
-            //System.Diagnostics.Debugger.Launch();
+            System.Diagnostics.Debugger.Launch();
 
             foreach (var syntaxTree in syntaxTrees)
             {
@@ -181,7 +181,7 @@ namespace {namespaceName}.Configurations
             var contextUsing = !string.IsNullOrEmpty(contextNamespace) ? $"using {contextNamespace};" : string.Empty;
 
             var filterName = baseFilterClass != null ? $",{className}Filter" : string.Empty;
-            var filterUsing = baseFilterClass != null ? $"using {namespaceName}.Filters" : string.Empty;
+            var filterUsing = baseFilterClass != null ? $"using {namespaceName}.Filters;" : string.Empty;
             var repositoryInterface = $@"
 {contextUsing}
 {filterUsing}
@@ -195,7 +195,7 @@ namespace {namespaceName}.Repositories
 ";
             var repositoryImpl = $@"
  
-    public class {className}Repository : {repositoryType.Name}<{classDeclaration.Name},{strongNameId},{contextType.Name}{filterName}>, I{className}Repository
+    public class {className}Repository : {repositoryType.Name}<{classDeclaration.Name},{strongNameId}{filterName},{contextType.Name}>, I{className}Repository
     {{
         public {className}Repository({contextType.Name} context) : base(context)
         {{
@@ -232,13 +232,38 @@ namespace {namespaceName}.ValueTypes
 }}
 ";
         }
+        private List<INamedTypeSymbol> GetClassByName(INamespaceSymbol namespaceSymbol, string[] classNames)
+        {
+            var classDeclarations = new List<INamedTypeSymbol>();
+
+            foreach (var member in namespaceSymbol.GetMembers())
+            {
+                if (member is INamespaceSymbol nestedNamespace)
+                {
+                    classDeclarations.AddRange(GetClassByName(nestedNamespace, classNames));
+                }
+                else if (member is INamedTypeSymbol typeSymbol && typeSymbol.TypeKind == TypeKind.Class)
+                {
+                    if (member.Name != "<Module>" && classNames.Contains(member.Name))
+                    {
+                        classDeclarations.Add(typeSymbol);
+                    }
+                }
+            }
+
+            return classDeclarations;
+        }
+
         private (INamedTypeSymbol baseFilterClass, string namespaceName) GetBaseFilterClassFromCompilation(Compilation compilation)
         {
-            var baseFilterClass = compilation.GlobalNamespace.GetTypeMembers().FirstOrDefault(t => t.Name == "BaseFilter");
-            if (baseFilterClass != null)
+            var filterClassNames = new string[] { "BaseFilter", "BasicFilter" };
+            var filterClass = GetClassByName(compilation.GlobalNamespace, filterClassNames).FirstOrDefault();
+
+            if (filterClass != null)
             {
-                return (baseFilterClass, baseFilterClass.ContainingNamespace.ToDisplayString());
+                return (filterClass, filterClass.ContainingNamespace.ToDisplayString());
             }
+
             return (null, null);
         }
         private string GenerateFilter(string namespaceName, INamedTypeSymbol baseFilterClass, string baseFilterNamespace, string className)

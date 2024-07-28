@@ -83,14 +83,14 @@ namespace SourceGenerator.APILevel.Generators
             var postAction = GeneratePostAction(className);
             var deleteAction = GenerateDeleteAction(className);
             var putAction = GeneratePutAction(className);
-
+            var constructor = GenerateConstructor(className);
             return $@"
 {usingBaseController} 
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using {assemblyRefs.ApplicationName}.{className}.Dto;
 using {assemblyRefs.ApplicationName}.{className}.Commands;
-using {assemblyRefs.ApplicationName}.{className}.Queries;;
+using {assemblyRefs.ApplicationName}.{className}.Queries;
 using {assemblyRefs.DomainName}.{className}.Entity.Filters; 
 namespace API.Controllers;
 
@@ -98,6 +98,7 @@ namespace API.Controllers;
 [ApiController]
 public class {className}Controller : {baseControllerInheritance}
 {{
+{constructor}
     {putAction} 
     {getAction}
     {postAction}
@@ -162,6 +163,15 @@ public class {className}Controller : {baseControllerInheritance}
 
             return namespaces;
         }
+        private string GenerateConstructor(string className)
+        {
+            return $@"
+                 private readonly ISender Mediator;
+                 public {className}Controller(ISender mediator){{
+                          Mediator = mediator;
+                 }}
+              ";
+        }
         private string GeneratePutAction(string className)
         {
             return $@"
@@ -200,7 +210,7 @@ public class {className}Controller : {baseControllerInheritance}
         {{
             {className} = create{className}Dto
         }});
-        if(result!=null){{
+        if(result.AsT0!=null){{
             return Ok(result);
         }}
         return BadRequest();
