@@ -3,14 +3,14 @@ namespace SourceGenerator.Common.Helper
 {
     public class FileHelper
     {
-        public static void WriteToFile(string directory, string fileName, string content)
+        public static void WriteToFile(string directory, string fileName, string content, bool force = false)
         {
-            if (!Directory.Exists(directory))
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
             var filePath = Path.Combine(directory, fileName);
-            if (File.Exists(filePath))
+            if (File.Exists(filePath) && force == false)
             {
                 return;
             }

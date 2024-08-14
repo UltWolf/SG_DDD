@@ -29,6 +29,33 @@ namespace SourceGenerator.Common.Helper
 
             return classDeclarations;
         }
+        public static string GetModifiedRegion(string codeToInsert, string regionName, SyntaxNode root, GeneratorExecutionContext context, string assemblyName)
+        {
+            var region = root.DescendantTrivia()
+                          .Where(trivia => trivia.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.RegionDirectiveTrivia))
+                          .FirstOrDefault(trivia => trivia.ToString().Contains(regionName));
+
+            if (region != default)
+            {
+                var fullText = root.ToFullString();
+
+
+                var regionSpan = region.Span;
+                var regionText = fullText.Substring(regionSpan.Start, regionSpan.Length);
+                if (!regionText.Contains(codeToInsert))
+                {
+                    var newRegionText = regionText + "\n" + codeToInsert;
+                    fullText = fullText.Remove(regionSpan.Start, regionSpan.Length).Insert(regionSpan.Start, newRegionText);
+                    string usingModule = $"using {assemblyName}.Modules;";
+                    if (!fullText.Contains(usingModule))
+                    {
+                        fullText = fullText.Insert(0, usingModule);
+                    }
+                    return fullText;
+                }
+            }
+            return null;
+        }
         public static string GetNameForClass(INamedTypeSymbol classDeclaration)
         {
             return classDeclaration.Name.Replace("Entity", "");

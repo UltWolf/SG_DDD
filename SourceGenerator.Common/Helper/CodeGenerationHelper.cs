@@ -7,7 +7,7 @@ namespace SourceGenerator.Common.Helper
     {
 
 
-        public static void WriteGeneratedClasses(List<ClassesToInsert> classesToInsert)
+        public static void WriteGeneratedClasses(List<ClassesToInsert> classesToInsert, bool force = false)
         {
             foreach (var classToInsert in classesToInsert)
             {
@@ -15,10 +15,14 @@ namespace SourceGenerator.Common.Helper
                 {
                     if (!string.IsNullOrEmpty(generatedClass.Generated))
                     {
-                        FileHelper.WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated);
+                        FileHelper.WriteToFile(generatedClass.PathToOutput, generatedClass.ClassName, generatedClass.Generated, force);
                     }
                 }
             }
+        }
+        public static string GetTypeOfId(IPropertySymbol idType)
+        {
+            return idType.Type.Name;
         }
         public static (INamedTypeSymbol baseFilterClass, string namespaceName) GetBaseFilterClass(IAssemblySymbol assemblySymbol)
         {

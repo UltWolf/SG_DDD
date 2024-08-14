@@ -6,7 +6,9 @@ using SourceGenerator.Domain.User.Entity.ValueTypes;
 namespace SourceGenerator.Domain.User.Entity
 {
     [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.DtoLayer)]
-    [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.ControllerLayer)]
+    //[SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.ControllerLayer)]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.MinimalApiLayer)]
+    [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.FastEndpointLayer)]
     [SourceGenerator.Common.Data.Attributes.GenerateCode(LayerGenerate.MediatRCommandLayer, typeof(BasicError))]
     [SourceGenerator.DomainLevel.Generators.Repository.Attributes.GenerateRepository(
         typeof(ApplicationDbContext),

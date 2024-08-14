@@ -16,5 +16,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\SourceGenerator.Common\SourceGenerator.Common.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="NewFolder\" />
+	</ItemGroup>
 
 </Project>

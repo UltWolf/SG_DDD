@@ -7,10 +7,15 @@
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="FastEndpoints" Version="5.28.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.7.0" />
+  </ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\SourceGenerator.Application\SourceGenerator.Application.csproj" />
 		<ProjectReference Include="..\SourceGenerator.Domain\SourceGenerator.Domain.csproj" />
-		<ProjectReference  Include="..\SourceGenerator.APILevel\SourceGenerator.APILevel.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\SourceGenerator.APILevel\SourceGenerator.APILevel.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 </Project>

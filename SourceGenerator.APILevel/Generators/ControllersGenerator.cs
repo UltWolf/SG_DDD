@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using SourceGenerator.APILevel.Helpers;
 using SourceGenerator.Common.Data;
 using SourceGenerator.Common.Data.Constants;
 using SourceGenerator.Common.Helper;
@@ -45,7 +46,7 @@ namespace SourceGenerator.APILevel.Generators
                             var @namespace = $"{assemblyName}.{ClassDeclarationHelper.GetNameForClass(classDeclaration)}";
                             var className = ClassDeclarationHelper.GetNameForClass(classDeclaration);
                             var baseController = GetBaseController(classDeclaration);
-                            var additionalNamespaces = GetAdditionalNamespaces(compilation);
+                            var additionalNamespaces = ReferenceHelper.GetAdditionalNamespaces(compilation);
 
                             var classToInsert = new ClassesToInsert
                             {
@@ -122,32 +123,7 @@ public class {className}Controller : {baseControllerInheritance}
             return baseController?.ToDisplayString();
         }
 
-        private AssemblyRefs GetAdditionalNamespaces(Compilation compilation)
-        {
-            var assemblyRef = new AssemblyRefs();
 
-            var applicationReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Application"));
-            if (applicationReference != null)
-            {
-                var applicationRef = compilation.GetAssemblyOrModuleSymbol(applicationReference) as IAssemblySymbol;
-                assemblyRef.ApplicationName = applicationRef.Name.ToString();
-            }
-
-            var domainsReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Domain"));
-            if (domainsReference != null)
-            {
-                assemblyRef.DomainName = (compilation.GetAssemblyOrModuleSymbol(domainsReference) as IAssemblySymbol).Name.ToString();
-            }
-
-            var infrastructureReference = compilation.References.FirstOrDefault(r => r.Display.Contains(".Infrastructure"));
-            if (infrastructureReference != null)
-            {
-                assemblyRef.InfrastructureName = (compilation.GetAssemblyOrModuleSymbol(infrastructureReference) as IAssemblySymbol).Name.ToString();
-
-            }
-
-            return assemblyRef;
-        }
 
         private List<string> GetNamespacesFromAssembly(IAssemblySymbol assemblySymbol)
         {
@@ -223,7 +199,7 @@ public class {className}Controller : {baseControllerInheritance}
     [ProducesResponseType(200)]
     [HttpDelete(""{{{className}Id}}"")]
     public async Task<IActionResult> Delete(Guid {className}Id)
-    {{
+    {{  
         await Mediator.Send(new Delete{className}Command
         {{
             {className}Id = {className}Id
